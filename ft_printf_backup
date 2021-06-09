@@ -1,0 +1,155 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    ft_//printf_backup                                   :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: oliver <oliver@student.42.fr>              +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2021/04/06 01:47:54 by oliver            #+#    #+#              #
+#    Updated: 2021/04/19 20:42:08 by oliver           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include "libft/libft.h"
+#include "ft_printf.h"
+
+void	helper(char *str, t_flags *flags)
+{
+	if (flags->prec != 0)
+		flags->pad = ' ';
+	//flags->total += flags->width;
+	flags->width -= flags->prec;
+	if (flags->prec <= ft_strlen(str))
+		flags->prec = 0;
+	if (flags->just == 'l')
+	{
+		if (flags->prec)
+			while ((flags->prec)--)
+				ft_putchar('0');
+		ft_putstr(str);
+		while ((flags->width)--)
+			ft_putchar(' ');
+	}
+	else
+	{
+		while ((flags->width)--)
+			ft_putchar(flags->pad);
+		if (flags->prec)
+			while ((flags->prec)-- > 0)
+				ft_putchar('0');
+		ft_putstr(str);
+	}
+}
+
+int		not_specifier(const char *str)
+{
+	if (*str == 'c' || *str == 's' || *str == 'p')
+		return (FALSE);
+	if (*str == 'd' || *str == 'i' || *str == 'u')
+		return (FALSE);
+	if (*str == 'x' || *str == 'X' || *str == '%')
+		return (FALSE);
+	return (TRUE);
+}
+
+void	mount_flags(const char *str, t_flags *flags)
+{
+	size_t	temp;
+
+	temp = 0;
+	str++;
+	while (not_specifier(str) && *str)
+	{
+		////printf("Just inside mount_flags while\t\tstr == %c\n\n", *str);
+		if (*str == '%')
+		{
+			ft_putchar('%');
+			return ;
+		}
+		if (*str == '-')
+			flags->just = 'l';
+		if (*str == '0')
+			flags->pad = '0';
+		else if (*str >= '0' && *str <= '9')
+		{
+			temp = num_set(str);
+			flags->width = temp;
+			while (*str >= '0' && *str <= '9')
+				str++;
+		//	//printf("flags->width inside wid if == %zu\n", flags->width);
+		//	//printf("STR INSIDE WIDTH == %C\n", *str);
+		}
+		if (*str == '.')
+		{
+		//	//printf("inside prec\n");
+			str++;
+			temp = num_set(str);
+			flags->prec = temp;
+			str++;
+		}
+		str++;
+	//	//printf("reached end of mount_flags\n");
+	//	//printf("STR AT END OF LOOP == %c\n\n", *str);
+	}
+}
+
+size_t		num_set(const char *str)
+{
+	int		j;
+	char	*sub;
+
+	j = 0;
+	while (str[j] >= '0' && str[j] <= '9')
+		j++;
+	sub = (char*)malloc((j) + 1);
+	j = 0;
+	while (*str >= '0' && *str <= '9' && *str != '\0')
+	{
+		sub[j] = *str;
+		j++;
+		str++;
+	}
+	sub[j] = '\0';
+	str++;
+	size_t num = atoi(sub);
+	return (num);
+}
+
+int		ft_//printf(const char *str, ...)
+{
+	va_list args;
+	t_flags	*flags;
+
+	flags = (t_flags*)malloc(sizeof(t_flags));
+	va_start(args, str);
+	reset_flags(flags);
+	while (str)
+	{
+		if(*str == '%')
+		{
+			//printf("Inside ft_//printf if *str == '%%'\n");
+			mount_flags(str, flags);
+			//printf("flags mounted successfully\n");
+			switchboard(str, flags, args);
+			//printf("Switchboard passed\n");
+			reset_flags(flags);
+			//printf("flags reset\n");
+		}
+		else
+			ft_putchar(*str);
+		if (*str)
+			str++;
+	}
+	va_end(args);
+	//return (flags->total);
+	return (0);
+}
+
+int		main()
+{
+	ft_//printf("%10.5d\n", 69);
+}
